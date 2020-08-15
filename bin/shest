@@ -8,16 +8,16 @@
 # Some config to get us going.
 shestDir="shest"
 
-defaultConfig='# Config for shest
+defaultConfig="# Config for shest
 
 # Test types for each stage.
-# testTypes="unit integration regression"
-testTypes="unit"
+# testTypes=\"unit integration regression\"
+testTypes=\"unit\"
 
 # Where should the tests be run?
-testLocation="/tmp/shest-$$"
-# testLocation="."
-# testLocation=~/shest/shest-$$
+testLocation=\"/tmp/shest-\$\$\"
+# testLocation=\".\"
+# testLocation=~/shest/shest-\$\$
 
 # Delete temporary files after the test finishes.
 deleteTmp=always
@@ -31,7 +31,17 @@ deleteLogs=never
 # deleteLogs=success
 # deleteLogs=failure
 # deleteLogs=never
-'
+
+# Is a warning a failure?
+# Generally it should be. But sometimes you want to know about stuff that isn't optimal, but not breal the build for it. If that's the case for you, this is the setting to change.
+warningIsAFailure=true
+# warningIsAFailure=false
+
+# Copy origin directory if testLocation is not \".\"?
+# You will almost want to do keep this set to true. It is useful to set this to false when testing the unit tester. I can't currently think of another use case. But it's here if you need it.
+copyOrigin=true
+# copyOrigin=false
+"
 
 newTest="#!/bin/bash
 # Write a decription of the test here.
@@ -79,9 +89,12 @@ function findShestHome
 # Figure out exactly where our home is and load our config.
 originalTestLocation="$testLocation"
 shestHome="$(findShestHome)"
-shestConfig="$shestHome/$shestDir/config/general"
-if [ -e "$shestConfig" ]; then
-    . "$shestConfig"
+if [ "$SHEST_CONFIG" == '' ]; then
+    SHEST_CONFIG="$shestHome/$shestDir/config/general"
+fi
+
+if [ -e "$SHEST_CONFIG" ]; then
+    . "$SHEST_CONFIG"
 elif [ "$1" == '--createProject' ] || [ "$1" == '--help' ]; then # Shut up and let them do it! ;)
     true
 else
@@ -161,55 +174,53 @@ function prepTests
     mkdir -p "$testLocation"
     cd "$testLocation"
     
+    mkdir -p "$shestDir/"{tmp,log}
+    
     if [ ! -e "$shestDir" ]; then
-        # For most use-cases, this will be true. But if shest is configured to use the project directory as its testLocation, all of this stuff will already exist.
-        rsync -rl "$shestHome"/* .
+        if [ "$copyOrigin" == 'true' ]; then
+            # For most use-cases, this will be true. But if shest is configured to use the project directory as its testLocation, all of this stuff will already exist.
+            rsync -rl "$shestHome"/* .
+        fi
     fi
     
-    mkdir -p "$shestDir/"{tmp,log}
 }
 
 function runTests
 {
     # Prep.
     prepTests
-    cd "$testLocation"
     failures=0
     warnings=0
     failuresAndWarnings=0
-    resultsFile="$testLocation/$shestDir/tmp/results.csv"
+    export RESULTS_FILE="$testLocation/$shestDir/tmp/results.csv"
     
     # Do.
-    cd shest/stages
     export testLocation
-    for stage in $(ls -1 | sort -u); do
+    for stage in $(ls -1 "$shestHome/$shestDir/stages" | sort -u); do
         indentation=''
+        stageDir="$shestHome/$shestDir/stages/$stage"
         echo "Stage: $stage"
-        cd "$stage"
-        for testItem in $(ls -1 | sort -u); do
-            if [ -f "$testItem" ]; then
+        for testItem in $(ls -1 "$stageDir" | sort -u); do
+            testItemEntity="$stageDir/$testItem"
+            if [ -f "$testItemEntity" ]; then
                 export TEST_NAME="$stage_$testItem"
-                export TEST_FILE="$testItem"
+                export TEST_FILE="$testItemEntity"
                 export indentation='  '
                 
                 runTest
             elif [ -d "$testItem" ]; then
-                cd "$testItem"
                 echo "${indentation}Test set: $testItem"
-                for subTestItem in $(ls -1 | sort -u); do
+                for subTestItem in $(ls -1 "$testItemEntity" | sort -u); do
                     export TEST_NAME="$stage_$testItem_$subTestItem"
-                    export TEST_FILE="$subTestItem"
+                    export TEST_FILE="$testItemEntity/$subTestItem"
                     export indentation='    '
                     
                     runTest &
                 done
                 wait
-                cd ..
             fi
         done
-        cd ..
     done
-    cd ../..
     
     showAnalytics
     
@@ -231,16 +242,26 @@ function runTests
 
 function runTest
 {
-    export TEST_DESCRIPTION="$(head -n2 "$testItem" | tail -n1)"
-    ./$TEST_FILE 2> "$testLocation/$shestDir/log/$TEST_NAME.log" 1>&2
-    cat --show-nonprinting "$testLocation/$shestDir/tmp/$TEST_NAME.result"
+    startDir="$(pwd)"
+    cd "$testLocation"
+
+    export TEST_RESULT_FILE="$testLocation/$shestDir/tmp/$TEST_NAME.result"
+    export TEST_DESCRIPTION="$(head -n2 "$TEST_FILE" | tail -n1)"
+    export SHEST_CONFIG
+    
+    echo "will run $TEST_FILE"
+    
+    $TEST_FILE 2> "$testLocation/$shestDir/log/$TEST_NAME.log" 1>&2
+    cat --show-nonprinting "$TEST_RESULT_FILE"
+    
+    cd "$startDir"
 }
 
 function showAnalytics
 {
-    passed="$(grep "pass" "$resultsFile" | wc -l)"
-    warnings="$(grep "warn" "$resultsFile" | wc -l)"
-    failures="$(grep "fail" "$resultsFile" | wc -l)"
+    passed="$(grep "pass" "$RESULTS_FILE" | wc -l)"
+    warnings="$(grep "warn" "$RESULTS_FILE" | wc -l)"
+    failures="$(grep "fail" "$RESULTS_FILE" | wc -l)"
     
     let failuresAndWarnings=$failures+$warnings
     
@@ -337,8 +358,8 @@ function setResult
     # TEST_NAME
     # TEST_DESCRIPTION
     
-    echo "$indentation[$result] $TEST_NAME: $message" > "$testLocation/$shestDir/tmp/$TEST_NAME.result"
-    echo "$result,$TEST_NAME,$TEST_DESCRIPTION,$message" >> "$testLocation/$shestDir/tmp/results.csv"
+    echo "$indentation[$result] $TEST_NAME: $message" > "$TEST_RESULT_FILE"
+    echo "$result,$TEST_NAME,$TEST_DESCRIPTION,$message" >> "$RESULTS_FILE"
 }
 
 
