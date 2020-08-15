@@ -181,22 +181,30 @@ function runTests
     
     # Do.
     cd shest/stages
+    export testLocation
     for stage in $(ls -1 | sort -u); do
         indentation=''
         echo "Stage: $stage"
         cd "$stage"
         for testItem in $(ls -1 | sort -u); do
-            indentation='  '
             if [ -f "$testItem" ]; then
                 export TEST_NAME="$stage_$testItem"
-                export TEST_DESCRIPTION="$(head -n2 "$testItem" | tail -n1)"
-                export indentation
-                export testLocation
-                export testItem
+                export TEST_FILE="$testItem"
+                export indentation='  '
+                
                 runTest
             elif [ -d "$testItem" ]; then
-                # TODO Implement this.
-                true
+                cd "$testItem"
+                echo "${indentation}Test set: $testItem"
+                for subTestItem in $(ls -1 | sort -u); do
+                    export TEST_NAME="$stage_$testItem_$subTestItem"
+                    export TEST_FILE="$subTestItem"
+                    export indentation='    '
+                    
+                    runTest &
+                done
+                wait
+                cd ..
             fi
         done
         cd ..
@@ -223,7 +231,8 @@ function runTests
 
 function runTest
 {
-    ./$testItem 2> "$testLocation/$shestDir/log/$TEST_NAME.log" 1>&2
+    export TEST_DESCRIPTION="$(head -n2 "$testItem" | tail -n1)"
+    ./$TEST_FILE 2> "$testLocation/$shestDir/log/$TEST_NAME.log" 1>&2
     cat --show-nonprinting "$testLocation/$shestDir/tmp/$TEST_NAME.result"
 }
 
