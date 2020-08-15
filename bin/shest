@@ -26,7 +26,8 @@ deleteTmp=always
 # deleteTmp=never
 
 # Delete logs after the test finishes.
-deleteLogs=always
+# If testLocation is in /tmp, set this to never to avoid an annoying warning.
+deleteLogs=never
 # deleteLogs=success
 # deleteLogs=failure
 # deleteLogs=never
@@ -51,6 +52,9 @@ else
 fi
 "
 
+if [ "$DEBUG" == '' ]; then
+    DEBUG=0 # This can be set in an environment variable or in config.
+fi
 
 # Here are a couple of functions to get us going.
 function errorExit
@@ -72,7 +76,8 @@ function findShestHome
     fi
 }
 
-# Figure out exactly where our home is.
+# Figure out exactly where our home is and load our config.
+originalTestLocation="$testLocation"
 shestHome="$(findShestHome)"
 shestConfig="$shestHome/$shestDir/config/general"
 if [ -e "$shestConfig" ]; then
@@ -83,10 +88,25 @@ else
     errorExit "It looks like shest has not been initilised on this project yet. You can do so by running \"$0 --createProject\"."
 fi
 
+# If we are being called as a library for a test, we don't want to reset the testLocation provided by the original caller.
+if [ "$originalTestLocation" != '' ]; then
+    testLocation="$originalTestLocation"
+    unset originalTestLocation
+fi
 
 
 
 # Now we can get to the main meat of the program.
+function debugOut
+{
+    local level="$1"
+    local message="$2"
+    
+    if [ "$level" -le "$DEBUG" ]; then
+        echo "Debug $level: $message"
+    fi
+}
+
 function notImplemented
 {
     local thing="$1"
@@ -137,6 +157,7 @@ function createTest
 
 function prepTests
 {
+    echo "Going to run tests in \"$testLocation\"."
     mkdir -p "$testLocation"
     cd "$testLocation"
     
@@ -153,22 +174,69 @@ function runTests
     # Prep.
     prepTests
     cd "$testLocation"
+    failures=0
+    warnings=0
+    failuresAndWarnings=0
+    resultsFile="$testLocation/$shestDir/tmp/results.csv"
     
     # Do.
-    pwd
-    ls shest
     cd shest/stages
-    for stage in ./*; do
-        echo "$stage"
+    for stage in $(ls -1 | sort -u); do
+        indentation=''
+        echo "Stage: $stage"
+        cd "$stage"
+        for testItem in $(ls -1 | sort -u); do
+            indentation='  '
+            if [ -f "$testItem" ]; then
+                export TEST_NAME="$stage_$testItem"
+                export TEST_DESCRIPTION="$(head -n2 "$testItem" | tail -n1)"
+                export indentation
+                export testLocation
+                export testItem
+                runTest
+            elif [ -d "$testItem" ]; then
+                # TODO Implement this.
+                true
+            fi
+        done
+        cd ..
     done
     cd ../..
     
+    showAnalytics
+    
     # Clean up.
-    if [ "$failures" -eq 0 ] && [ "$warnings" -eq 0 ]; then
+    if [ "$warningIsAFailure" == 'true' ]; then
+        valueToTest="$failuresAndWarnings"
+    else
+        valueToTest="$failures"
+    fi
+    
+    if [ "$valueToTest" -eq 0 ]; then
         cleanUp 'true'
+        return 0
     else
         cleanUp 'false'
+        return 1
     fi
+}
+
+function runTest
+{
+    ./$testItem 2> "$testLocation/$shestDir/log/$TEST_NAME.log" 1>&2
+    cat --show-nonprinting "$testLocation/$shestDir/tmp/$TEST_NAME.result"
+}
+
+function showAnalytics
+{
+    passed="$(grep "pass" "$resultsFile" | wc -l)"
+    warnings="$(grep "warn" "$resultsFile" | wc -l)"
+    failures="$(grep "fail" "$resultsFile" | wc -l)"
+    
+    let failuresAndWarnings=$failures+$warnings
+    
+    echo
+    echo "Pass: $passed, Warn: $warnings, Fail: $failures"
 }
 
 function cleanUp
@@ -211,11 +279,11 @@ function cleanUp
 function cleanTmp
 {
     if [ "${testLocation::5}" == '/tmp/' ]; then
-        echo "deleteTmp==\"$deleteTmp\" and testLocation ($testLocation) is in /tmp. So deleting everything, including logs, which are also in the same directory."
+        debugOut 1 "deleteTmp==\"$deleteTmp\" and testLocation ($testLocation) is in /tmp. So deleting everything, including logs, which are also in the same directory."
         cd "$shestHome"
         rm -Rf "$testLocation"
     else
-        echo "deleteTmp==\"$deleteTmp\", but testLocation ($testLocation) is not in /tmp. So only deleting tmp in this line."
+        debugOut 0 "deleteTmp==\"$deleteTmp\", but testLocation ($testLocation) is not in /tmp. So only deleting tmp in this line."
         cd "$testLocation"
         rm -Rf "$shestDir/tmp"
     fi
@@ -224,7 +292,7 @@ function cleanTmp
 function cleanLogs
 {
     if [ "${testLocation::5}" == '/tmp/' ]; then
-        echo "Deleting logs, but testLocation is in /tmp, so if tmp is configured to be deleted, logs will get deleted anyway."
+        debugOut 0 "Deleting logs, but testLocation is in /tmp, so if tmp is configured to be deleted, logs will get deleted anyway."
     fi
     cd "$testLocation"
     rm -Rf "$shestDir/log"
@@ -257,6 +325,11 @@ function setResult
 {
     local result="$1"
     local message="$2"
+    # TEST_NAME
+    # TEST_DESCRIPTION
+    
+    echo "$indentation[$result] $TEST_NAME: $message" > "$testLocation/$shestDir/tmp/$TEST_NAME.result"
+    echo "$result,$TEST_NAME,$TEST_DESCRIPTION,$message" >> "$testLocation/$shestDir/tmp/results.csv"
 }
 
 
@@ -298,8 +371,12 @@ case $1 in
     ;;
     '--run') # Run the tests.
         runTests
+        exit $?
     ;;
     '--help') # Show this help.
+        showHelp
+    ;;
+    '-h'|'/?'|'help')
         showHelp
     ;;
     '--doNothing')
@@ -307,6 +384,7 @@ case $1 in
         true
     ;;
     *)
-        showHelp
+        runTests
+        exit $?
     ;;
 esac
