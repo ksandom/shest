@@ -1,0 +1,312 @@
+#!/bin/bash
+# Sequenced, automated testing.
+
+
+## End of header.
+
+
+# Some config to get us going.
+shestDir="shest"
+
+defaultConfig='# Config for shest
+
+# Test types for each stage.
+# testTypes="unit integration regression"
+testTypes="unit"
+
+# Where should the tests be run?
+testLocation="/tmp/shest-$$"
+# testLocation="."
+# testLocation=~/shest/shest-$$
+
+# Delete temporary files after the test finishes.
+deleteTmp=always
+# deleteTmp=success
+# deleteTmp=failure
+# deleteTmp=never
+
+# Delete logs after the test finishes.
+deleteLogs=always
+# deleteLogs=success
+# deleteLogs=failure
+# deleteLogs=never
+'
+
+newTest="#!/bin/bash
+# Write a decription of the test here.
+
+. $0 \"--doNothing\"
+
+result=\"\$(doSomething)\"
+exitCode="\$?"
+
+if [ \"\$result\" == 'something expected' ] && [ \"\$exitCode\" == \"\$passCode\" ] ; then
+    pass \"Great!\"
+elif [ \"\$result\" == 'something good, but might be a problem' ]  && [ \"\$exitCode\" == \"\$warnCode\" ] ; then
+    warn \"This is within range, but could be a problem. value=\\\"\$result\\\".\"
+elif [ \"\$exitCode\" == \"\$failCode\" ]; then
+    fail \"Got exitCode \$exitCode. Value=\\\"\$result\\\".\"
+else
+    fail \"Got value=\\\"\$result\\\".\"
+fi
+"
+
+
+# Here are a couple of functions to get us going.
+function errorExit
+{
+    local message="$1"
+    echo "$message" >&2
+    exit 1
+}
+
+function findShestHome
+{
+    if [ -e "$shestDir/config/general" ]; then
+        echo "$(pwd)"
+    elif [ "$(pwd)" == '/' ]; then
+        return 1
+    else
+        cd ..
+        findShestHome
+    fi
+}
+
+# Figure out exactly where our home is.
+shestHome="$(findShestHome)"
+shestConfig="$shestHome/$shestDir/config/general"
+if [ -e "$shestConfig" ]; then
+    . "$shestConfig"
+elif [ "$1" == '--createProject' ] || [ "$1" == '--help' ]; then # Shut up and let them do it! ;)
+    true
+else
+    errorExit "It looks like shest has not been initilised on this project yet. You can do so by running \"$0 --createProject\"."
+fi
+
+
+
+
+# Now we can get to the main meat of the program.
+function notImplemented
+{
+    local thing="$1"
+    
+    errorExit "$thing is not implemented yet."
+}
+
+function createProject
+{
+    mkdir -p "$shestHome/$shestDir/"{config,stages}
+    createConfig
+}
+
+function createConfig
+{
+    echo "$defaultConfig" > "$shestHome/$shestDir/config/general"
+}
+
+function createStage
+{
+    local stageName="$1"
+    
+    mkdir -p "$shestHome/$shestDir/stages/$stageName"
+}
+
+function createTestTypes
+{
+    cd "$shestHome/$shestDir/stages"
+    
+    for stage in $(ls -1); do
+        for testType in $testTypes; do
+            finalDir="$stage/$testType"
+            
+            if [ ! -e "$finalDir" ]; then
+                mkdir -p "$finalDir"
+            fi
+        done
+    done
+}
+
+function createTest
+{
+    local fileName="$1"
+    
+    echo "$newTest" > "$fileName"
+    chmod 755 "$fileName"
+}
+
+function prepTests
+{
+    mkdir -p "$testLocation"
+    cd "$testLocation"
+    
+    if [ ! -e "$shestDir" ]; then
+        # For most use-cases, this will be true. But if shest is configured to use the project directory as its testLocation, all of this stuff will already exist.
+        rsync -rl "$shestHome"/* .
+    fi
+    
+    mkdir -p "$shestDir/"{tmp,log}
+}
+
+function runTests
+{
+    # Prep.
+    prepTests
+    cd "$testLocation"
+    
+    # Do.
+    pwd
+    ls shest
+    cd shest/stages
+    for stage in ./*; do
+        echo "$stage"
+    done
+    cd ../..
+    
+    # Clean up.
+    if [ "$failures" -eq 0 ] && [ "$warnings" -eq 0 ]; then
+        cleanUp 'true'
+    else
+        cleanUp 'false'
+    fi
+}
+
+function cleanUp
+{
+    local completeSuccess="$1"
+    
+    case "$deleteTmp" in
+        'always')
+            cleanTmp
+        ;;
+        'success')
+            if [ "$completeSuccess" == 'true' ]; then
+                cleanTmp
+            fi
+        ;;
+        'failure')
+            if [ "$completeSuccess" == 'false' ]; then
+                cleanTmp
+            fi
+        ;;
+    esac
+    
+    case "$deleteLogs" in
+        'always')
+            cleanLogs
+        ;;
+        'success')
+            if [ "$completeSuccess" == 'true' ]; then
+                cleanLogs
+            fi
+        ;;
+        'failure')
+            if [ "$completeSuccess" == 'false' ]; then
+                cleanLogs
+            fi
+        ;;
+    esac
+}
+
+function cleanTmp
+{
+    if [ "${testLocation::5}" == '/tmp/' ]; then
+        echo "deleteTmp==\"$deleteTmp\" and testLocation ($testLocation) is in /tmp. So deleting everything, including logs, which are also in the same directory."
+        cd "$shestHome"
+        rm -Rf "$testLocation"
+    else
+        echo "deleteTmp==\"$deleteTmp\", but testLocation ($testLocation) is not in /tmp. So only deleting tmp in this line."
+        cd "$testLocation"
+        rm -Rf "$shestDir/tmp"
+    fi
+}
+
+function cleanLogs
+{
+    if [ "${testLocation::5}" == '/tmp/' ]; then
+        echo "Deleting logs, but testLocation is in /tmp, so if tmp is configured to be deleted, logs will get deleted anyway."
+    fi
+    cd "$testLocation"
+    rm -Rf "$shestDir/log"
+}
+
+
+# Stuff for sending test results to the right place.
+function pass
+{
+    local message="$1"
+    
+    setResult "pass" "$message"
+}
+
+function warn
+{
+    local message="$1"
+    
+    setResult "warn" "$message"
+}
+
+function fail
+{
+    local message="$1"
+    
+    setResult "fail" "$message"
+}
+
+function setResult
+{
+    local result="$1"
+    local message="$2"
+}
+
+
+# Stuff for command line parsing.
+function requireParameter
+{
+    local parameterName="$1"
+    local parameter="$2"
+    
+    if [ "$2" == '' ]; then
+        errorExit "Parameter \"$parameterName\" is required. Consult $0 --help for more info."
+    fi
+}
+
+function showHelp
+{
+        grep -B1000 '^## End of header.' "$0" | grep '^# ' | cut -b3-
+        grep "') #" "$0" | grep -v grep | sed "s/^ *'/  /g; s/') #/^/g" | column -s^ -t
+}
+
+case $1 in
+    '--createProject') # Create a bare project in the current directory.
+        createProject
+        echo "Excellent. Now take a look at the config in \"$shestHome/config/general\", and then create a stage with \"$0 --createStage stageName\", then run \"$0 --createTestTypes\"."
+    ;;
+    '--createConfig') # Re-create the config used be shest. This is normally done for you. But will be useful if you upgrade shest and need the latest config. It will override what ever you have in place.
+        createConfig
+    ;;
+    '--createStage') # Create a new stage. --createStage stageName
+        requireParameter "stageName" "$2"
+        createStage "$2"
+    ;;
+    '--createTestTypes') # Create the test types based on what's in the config.
+        createTestTypes
+    ;;
+    '--createTest') # Create a test in the current directory. --createTest testName.sh
+        requireParameter "testName" "$2"
+        createTest "$2"
+    ;;
+    '--run') # Run the tests.
+        runTests
+    ;;
+    '--help') # Show this help.
+        showHelp
+    ;;
+    '--doNothing')
+        # This is so the script can be included in tests to use it as a library.
+        true
+    ;;
+    *)
+        showHelp
+    ;;
+esac

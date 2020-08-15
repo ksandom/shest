@@ -11,3 +11,8 @@ Shest is aimed at automating
     * Unit testing.
     * Integration testing.
     * Regression testing.
+
+## Requirements
+
+* bash
+* rsync
