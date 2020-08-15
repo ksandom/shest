@@ -249,8 +249,6 @@ function runTest
     export TEST_DESCRIPTION="$(head -n2 "$TEST_FILE" | tail -n1)"
     export SHEST_CONFIG
     
-    echo "will run $TEST_FILE"
-    
     $TEST_FILE 2> "$testLocation/$shestDir/log/$TEST_NAME.log" 1>&2
     cat --show-nonprinting "$TEST_RESULT_FILE"
     
@@ -259,9 +257,9 @@ function runTest
 
 function showAnalytics
 {
-    passed="$(grep "pass" "$RESULTS_FILE" | wc -l)"
-    warnings="$(grep "warn" "$RESULTS_FILE" | wc -l)"
-    failures="$(grep "fail" "$RESULTS_FILE" | wc -l)"
+    passed="$(grep "^pass," "$RESULTS_FILE" | wc -l)"
+    warnings="$(grep "^warn," "$RESULTS_FILE" | wc -l)"
+    failures="$(grep "^fail," "$RESULTS_FILE" | wc -l)"
     
     let failuresAndWarnings=$failures+$warnings
     
