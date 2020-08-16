@@ -2,3 +2,11 @@
 # This is an excellent place to set the colour sheme.
 
 userConfigLocation=~/.config/shest
+
+# Set the colour theme.
+colourNormal="$colourReset$colourGrey"
+colourPass="$colourGreen"
+colourWarn="$colourBrown"
+colourFail="$colourRed"
+colourInsignificant="$colourDarkGrey"
+

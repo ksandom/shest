@@ -63,6 +63,31 @@ else
 fi
 "
 
+colourReset='\033[0m'
+colourBlack='\033[0;30m'
+colourRed='\033[0;31m'
+colourGreen='\033[0;32m'
+colourBrown='\033[0;33m'
+colourBlue='\033[0;34m'
+colourPueple='\033[0;35m'
+colourCyan='\033[0;36m'
+colourGrey='\033[0;37m'
+
+colourDarkGrey='\033[1;30m'
+colourBrightRed='\033[1;31m'
+colourBrightGreen='\033[1;32m'
+colourYellow='\033[1;33m'
+colourBrightBlue='\033[1;34m'
+colourBrightPueple='\033[1;35m'
+colourBrightCyan='\033[1;36m'
+colourWhite='\033[1;37m'
+
+colourNormal="$colourReset$colourGrey"
+colourPass="$colourGreen"
+colourWarn="$colourBrown"
+colourFail="$colourRed"
+colourInsignificant="$colourDarkGrey"
+
 if [ "$DEBUG" == '' ]; then
     DEBUG=0 # This can be set in an environment variable or in config.
 fi
@@ -289,7 +314,7 @@ function showAnalytics
     let failuresAndWarnings=$failures+$warnings
     
     echo
-    echo "Pass: $passed, Warn: $warnings, Fail: $failures"
+    echo -e "${colourPass}Pass${colourInsignificant}: ${colourNormal}$passed${colourInsignificant}, ${colourWarn}Warn${colourInsignificant}: ${colourNormal}$warnings${colourInsignificant}, ${colourFail}Fail${colourInsignificant}: ${colourNormal}$failures"
 }
 
 function cleanUp
@@ -381,7 +406,26 @@ function setResult
     # TEST_NAME
     # TEST_DESCRIPTION
     
-    echo "$indentation[$result] $TEST_NAME: $message" > "$TEST_RESULT_FILE"
+#     colourNormal="$colourReset$colourGrey"
+#     colourPass="$colourGreen"
+#     colourWarn="$colourBrown"
+#     colourFail="$colourRed"
+#     colourInsignificant="$colourDarkGrey"
+    
+    case $result in
+        'pass')
+            colourResult="$colourPass"
+        ;;
+        'warn')
+            colourResult="$colourWarn"
+        ;;
+        'fail')
+            colourResult="$colourFail"
+        ;;
+    esac
+    
+    
+    echo -e "$indentation$colourInsignificant[$colourResult$result$colourInsignificant] $colourNormal$TEST_NAME$colourInsignificant: $colourNormal$message" > "$TEST_RESULT_FILE"
     echo "$result,$TEST_NAME,$TEST_DESCRIPTION,$message" >> "$RESULTS_FILE"
 }
 
