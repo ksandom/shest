@@ -1,0 +1,4 @@
+# Any configuration that you want to be default before anything else is loaded, put here. If something else gets set later on, that will take precedence over a variable with the same name in here.
+# This is an excellent place to set the colour sheme.
+
+userConfigLocation=~/.config/shest

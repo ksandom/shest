@@ -1,0 +1,2 @@
+# Any configuration that you want to assert to be true, despite what a project has set. Eg you might want to set the test location to happen in a specific RAM drive.
+# Be careful what you set in here, because it could break assumptions by the author of a project.

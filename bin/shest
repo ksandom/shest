@@ -7,6 +7,7 @@
 
 # Some config to get us going.
 shestDir="shest"
+userConfigLocation=~/.config/shest
 
 defaultConfig="# Config for shest
 
@@ -86,6 +87,20 @@ function findShestHome
     fi
 }
 
+# Load configured defaults.
+if [ -e "/etc/shest/defaults" ]; then
+    . "/etc/shest/defaults"
+fi
+
+if [ ! -d "$userConfigLocation" ] && [ -e "/etc/shest/" ] ; then
+    mkdir -p "$userConfigLocation"
+    cp /etc/shest/* "$userConfigLocation"
+fi
+
+if [ -e "$userConfigLocation/defaults" ]; then
+    . "$userConfigLocation/defaults"
+fi
+
 # Figure out exactly where our home is and load our config.
 originalTestLocation="$testLocation"
 shestHome="$(findShestHome)"
@@ -106,6 +121,16 @@ if [ "$originalTestLocation" != '' ]; then
     testLocation="$originalTestLocation"
     unset originalTestLocation
 fi
+
+# Load configured overrides.
+if [ -e "/etc/shest/overrides" ]; then
+    . "/etc/shest/overrides"
+fi
+
+if [ -e "$userConfigLocation/overrides" ]; then
+    . "$userConfigLocation/overrides"
+fi
+
 
 
 
