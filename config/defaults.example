@@ -4,9 +4,13 @@
 userConfigLocation=~/.config/shest
 
 # Set the colour theme.
+# If you don't want any colours, just set all of these to an empty string. Ie "".
 colourNormal="$colourReset$colourGrey"
 colourPass="$colourGreen"
 colourWarn="$colourBrown"
 colourFail="$colourRed"
 colourInsignificant="$colourDarkGrey"
-
+colourTestName="$colourCyan"
+colourTestMessage="$colourNormal"
+colourStage="$colourPurple"
+colourTestSet="$colourYellow"

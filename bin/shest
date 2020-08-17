@@ -69,7 +69,7 @@ colourRed='\033[0;31m'
 colourGreen='\033[0;32m'
 colourBrown='\033[0;33m'
 colourBlue='\033[0;34m'
-colourPueple='\033[0;35m'
+colourPurple='\033[0;35m'
 colourCyan='\033[0;36m'
 colourGrey='\033[0;37m'
 
@@ -87,6 +87,10 @@ colourPass="$colourGreen"
 colourWarn="$colourBrown"
 colourFail="$colourRed"
 colourInsignificant="$colourDarkGrey"
+colourTestName="$colourCyan"
+colourTestMessage="$colourNormal"
+colourStage="$colourPurple"
+colourTestSet="$colourYellow"
 
 if [ "$DEBUG" == '' ]; then
     DEBUG=0 # This can be set in an environment variable or in config.
@@ -249,7 +253,7 @@ function runTests
     for stage in $(ls -1 "$shestHome/$shestDir/stages" | sort -u); do
         indentation=''
         stageDir="$shestHome/$shestDir/stages/$stage"
-        echo "Stage: $stage"
+        echo -e "${colourStage}Stage${colourInsignificant}: ${colourNormal}$stage"
         for testItem in $(ls -1 "$stageDir" | sort -u); do
             testItemEntity="$stageDir/$testItem"
             if [ -f "$testItemEntity" ]; then
@@ -258,8 +262,8 @@ function runTests
                 export indentation='  '
                 
                 runTest
-            elif [ -d "$testItem" ]; then
-                echo "${indentation}Test set: $testItem"
+            elif [ -d "$testItemEntity" ]; then
+                echo -e "${indentation}${colourTestSet}Test set${colourInsignificant}: ${colourNormal}$testItem"
                 for subTestItem in $(ls -1 "$testItemEntity" | sort -u); do
                     export TEST_NAME="$stage_$testItem_$subTestItem"
                     export TEST_FILE="$testItemEntity/$subTestItem"
@@ -300,7 +304,7 @@ function runTest
     export SHEST_CONFIG
     
     $TEST_FILE 2> "$testLocation/$shestDir/log/$TEST_NAME.log" 1>&2
-    cat --show-nonprinting "$TEST_RESULT_FILE"
+    cat "$TEST_RESULT_FILE"
     
     cd "$startDir"
 }
@@ -403,14 +407,6 @@ function setResult
 {
     local result="$1"
     local message="$2"
-    # TEST_NAME
-    # TEST_DESCRIPTION
-    
-#     colourNormal="$colourReset$colourGrey"
-#     colourPass="$colourGreen"
-#     colourWarn="$colourBrown"
-#     colourFail="$colourRed"
-#     colourInsignificant="$colourDarkGrey"
     
     case $result in
         'pass')
@@ -425,7 +421,7 @@ function setResult
     esac
     
     
-    echo -e "$indentation$colourInsignificant[$colourResult$result$colourInsignificant] $colourNormal$TEST_NAME$colourInsignificant: $colourNormal$message" > "$TEST_RESULT_FILE"
+    echo -e "$indentation$colourInsignificant[$colourResult$result$colourInsignificant] $colourTestName$TEST_NAME$colourInsignificant: $colourTestMessage$message" > "$TEST_RESULT_FILE"
     echo "$result,$TEST_NAME,$TEST_DESCRIPTION,$message" >> "$RESULTS_FILE"
 }
 
