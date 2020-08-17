@@ -47,7 +47,7 @@ copyOrigin=true
 newTest="#!/bin/bash
 # Write a decription of the test here.
 
-. $0 \"--doNothing\"
+. \"\$SHEST_SCRIPT\" \"--doNothing\"
 
 result=\"\$(doSomething)\"
 exitCode="\$?"
@@ -115,6 +115,26 @@ function findShestHome
         findShestHome
     fi
 }
+
+case "$(uname -s)" in
+    Linux*)
+        export SHEST_SCRIPT="$(readlink -f "$0")"
+    ;;
+    Darwin*)
+        # TODO Could someone please confirm this works in macOS? Or confirm a better way? - https://github.com/ksandom/shest/issues/1
+        if ! which greadlink > /dev/null; then
+            errorExit "Need greadlink when on macOS. If you can see a better way, a PR would be very welcome."
+        fi
+        export SHEST_SCRIPT="$(greadlink -f "$0")"
+    ;;
+    CYGWIN*)
+        # TODO Could someone please confirm this works in cygwin? - https://github.com/ksandom/shest/issues/2
+        export SHEST_SCRIPT="$(readlink -f "$0")"
+    ;;
+    *)
+        errorExit "Failed to detect a known OS."
+    ;;
+esac
 
 # Load configured defaults.
 if [ -e "/etc/shest/defaults" ]; then
