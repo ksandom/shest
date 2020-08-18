@@ -4,8 +4,7 @@
 
 ## End of header.
 
-
-# Some config to get us going.
+# Some config/defaults to get us going.
 shestDir="shest"
 userConfigLocation=~/.config/shest
 
@@ -52,6 +51,8 @@ newTest="#!/bin/bash
 result=\"\$(doSomething)\"
 exitCode="\$?"
 
+
+# NOTE that passCode, warnCode, and failCode are not set for you since they may be different depending on what you are testing. Therefore you should either set these values, or replace them with what is meaningful for you.
 if [ \"\$result\" == 'something expected' ] && [ \"\$exitCode\" == \"\$passCode\" ] ; then
     pass \"Great!\"
 elif [ \"\$result\" == 'something good, but might be a problem' ]  && [ \"\$exitCode\" == \"\$warnCode\" ] ; then
@@ -59,7 +60,7 @@ elif [ \"\$result\" == 'something good, but might be a problem' ]  && [ \"\$exit
 elif [ \"\$exitCode\" == \"\$failCode\" ]; then
     fail \"Got exitCode \$exitCode. Value=\\\"\$result\\\".\"
 else
-    fail \"Got value=\\\"\$result\\\".\"
+    fail \"Got value=\\\"\$result\\\" and exit code=\$exitCode.\"
 fi
 "
 
@@ -109,6 +110,7 @@ function findShestHome
     if [ -e "$shestDir/config/general" ]; then
         echo "$(pwd)"
     elif [ "$(pwd)" == '/' ]; then
+        echo '.'
         return 1
     else
         cd ..
@@ -116,25 +118,27 @@ function findShestHome
     fi
 }
 
-case "$(uname -s)" in
-    Linux*)
-        export SHEST_SCRIPT="$(readlink -f "$0")"
-    ;;
-    Darwin*)
-        # TODO Could someone please confirm this works in macOS? Or confirm a better way? - https://github.com/ksandom/shest/issues/1
-        if ! which greadlink > /dev/null; then
-            errorExit "Need greadlink when on macOS. If you can see a better way, a PR would be very welcome."
-        fi
-        export SHEST_SCRIPT="$(greadlink -f "$0")"
-    ;;
-    CYGWIN*)
-        # TODO Could someone please confirm this works in cygwin? - https://github.com/ksandom/shest/issues/2
-        export SHEST_SCRIPT="$(readlink -f "$0")"
-    ;;
-    *)
-        errorExit "Failed to detect a known OS."
-    ;;
-esac
+if [ "$SHEST_SCRIPT" == '' ]; then
+    case "$(uname -s)" in
+        Linux*)
+            export SHEST_SCRIPT="$(readlink -f "$0")"
+        ;;
+        Darwin*)
+            # TODO Could someone please confirm this works in macOS? Or confirm a better way? - https://github.com/ksandom/shest/issues/1
+            if ! which greadlink > /dev/null; then
+                errorExit "Need greadlink when on macOS. If you can see a better way, a PR would be very welcome."
+            fi
+            export SHEST_SCRIPT="$(greadlink -f "$0")"
+        ;;
+        CYGWIN*)
+            # TODO Could someone please confirm this works in cygwin? - https://github.com/ksandom/shest/issues/2
+            export SHEST_SCRIPT="$(readlink -f "$0")"
+        ;;
+        *)
+            errorExit "Failed to detect a known OS."
+        ;;
+    esac
+fi
 
 # Load configured defaults.
 if [ -e "/etc/shest/defaults" ]; then
@@ -159,10 +163,10 @@ fi
 
 if [ -e "$SHEST_CONFIG" ]; then
     . "$SHEST_CONFIG"
-elif [ "$1" == '--createProject' ] || [ "$1" == '--help' ]; then # Shut up and let them do it! ;)
+elif [ "$1" == '--createProject' ] || [ "$1" == '--help' ] || [ "${1::7}" == '--debug' ]; then # Shut up and let them do it! ;)
     true
 else
-    errorExit "It looks like shest has not been initilised on this project yet. You can do so by running \"$0 --createProject\"."
+    errorExit "It looks like shest has not been initialised on this project yet. You can do so by running \"$0 --createProject\"."
 fi
 
 # If we are being called as a library for a test, we don't want to reset the testLocation provided by the original caller.
@@ -179,7 +183,6 @@ fi
 if [ -e "$userConfigLocation/overrides" ]; then
     . "$userConfigLocation/overrides"
 fi
-
 
 
 
@@ -400,6 +403,13 @@ function cleanLogs
     rm -Rf "$shestDir/log"
 }
 
+function testingShest
+{
+    # This function is strictly for testing shest within shest. Everyone else should leave it a lone.
+    
+    unset SHEST_CONFIG
+}
+
 
 # Stuff for sending test results to the right place.
 function pass
@@ -463,6 +473,7 @@ function showHelp
         grep "') #" "$0" | grep -v grep | sed "s/^ *'/  /g; s/') #/^/g" | column -s^ -t
 }
 
+
 case $1 in
     '--createProject') # Create a bare project in the current directory.
         createProject
@@ -492,8 +503,10 @@ case $1 in
     '-h'|'/?'|'help')
         showHelp
     ;;
+    '--debugState')
+        set | grep -i shest
+    ;;
     '--doNothing')
-        # This is so the script can be included in tests to use it as a library.
         true
     ;;
     *)
