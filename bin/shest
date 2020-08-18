@@ -11,8 +11,8 @@ userConfigLocation=~/.config/shest
 defaultConfig="# Config for shest
 
 # Test types for each stage.
-# testTypes=\"unit integration regression\"
-testTypes=\"unit\"
+testTypes=\"unit integration regression\"
+# testTypes=\"unit\"
 
 # Where should the tests be run?
 testLocation=\"/tmp/shest-\$\$\"
@@ -92,6 +92,7 @@ colourTestName="$colourCyan"
 colourTestMessage="$colourNormal"
 colourStage="$colourPurple"
 colourTestSet="$colourYellow"
+colourTestType="$colorBrightCyan"
 
 if [ "$DEBUG" == '' ]; then
     DEBUG=0 # This can be set in an environment variable or in config.
@@ -206,8 +207,9 @@ function notImplemented
 
 function createProject
 {
-    mkdir -p "$shestHome/$shestDir/"{config,stages}
+    mkdir -p "$shestHome/$shestDir/config"
     createConfig
+    createTestTypes
 }
 
 function createConfig
@@ -215,27 +217,17 @@ function createConfig
     echo "$defaultConfig" > "$shestHome/$shestDir/config/general"
 }
 
-function createStage
-{
-    local stageName="$1"
-    
-    mkdir -p "$shestHome/$shestDir/stages/$stageName"
-    
-    echo "Excellent. Now run \"$0 --createTestTypes\" to create the test types that you would like to run."
-}
-
 function createTestTypes
 {
-    cd "$shestHome/$shestDir/stages"
+    cd "$shestHome/$shestDir"
     
-    for stage in $(ls -1); do
-        for testType in $testTypes; do
-            finalDir="$stage/$testType"
-            
-            if [ ! -e "$finalDir" ]; then
-                mkdir -p "$finalDir"
-            fi
-        done
+    for testType in $testTypes; do
+        if [ ! -e "$finalDir" ]; then
+            mkdir -p "$testType/myFirstStage"
+            cd "$testType/myFirstStage"
+            createTest "exampleTest.sh"
+            cd ~-
+        fi
     done
 }
 
@@ -275,30 +267,38 @@ function runTests
     
     # Do.
     export testLocation
-    for stage in $(ls -1 "$shestHome/$shestDir/stages" | sort -u); do
+    for testType in $testTypes; do
         indentation=''
-        stageDir="$shestHome/$shestDir/stages/$stage"
-        echo -e "${colourStage}Stage${colourInsignificant}: ${colourNormal}$stage"
-        for testItem in $(ls -1 "$stageDir" | sort -u); do
-            testItemEntity="$stageDir/$testItem"
-            if [ -f "$testItemEntity" ]; then
-                export TEST_NAME="$stage_$testItem"
-                export TEST_FILE="$testItemEntity"
-                export indentation='  '
-                
-                runTest
-            elif [ -d "$testItemEntity" ]; then
-                echo -e "${indentation}${colourTestSet}Test set${colourInsignificant}: ${colourNormal}$testItem"
-                for subTestItem in $(ls -1 "$testItemEntity" | sort -u); do
-                    export TEST_NAME="$stage_$testItem_$subTestItem"
-                    export TEST_FILE="$testItemEntity/$subTestItem"
-                    export indentation='    '
-                    
-                    runTest &
+        if [ -e "$shestHome/$shestDir/$testType" ]; then
+            echo -e "${indentation}${colourTestType}Test type${colourInsignificant}: ${colourNormal}$testType"
+            for stage in $(ls -1 "$shestHome/$shestDir/$testType" | sort -u); do
+                indentation='  '
+                stageDir="$shestHome/$shestDir/$testType/$stage"
+                echo -e "${indentation}${colourStage}Stage${colourInsignificant}: ${colourNormal}$stage"
+                for testItem in $(ls -1 "$stageDir" | sort -u); do
+                    testItemEntity="$stageDir/$testItem"
+                    if [ -f "$testItemEntity" ]; then
+                        export TEST_NAME="$stage_$testItem"
+                        export TEST_FILE="$testItemEntity"
+                        export indentation='    '
+                        
+                        runTest
+                    elif [ -d "$testItemEntity" ]; then
+                        echo -e "${indentation}${colourTestSet}Test set${colourInsignificant}: ${colourNormal}$testItem"
+                        for subTestItem in $(ls -1 "$testItemEntity" | sort -u); do
+                            export TEST_NAME="$stage_$testItem_$subTestItem"
+                            export TEST_FILE="$testItemEntity/$subTestItem"
+                            export indentation='      '
+                            
+                            runTest &
+                        done
+                        wait
+                    fi
                 done
-                wait
-            fi
-        done
+            done
+        else
+            echo -e "${indentation}${colourTestType}Test type${colourInsignificant}: ${colourNormal}Skipping $testType (empty)."
+        fi
     done
     
     showAnalytics
@@ -438,7 +438,7 @@ function fail
 function setResult
 {
     local result="$1"
-    local message="$2"
+    local message="$(echo "$2" | head -n 1)"
     
     case $result in
         'pass')
@@ -484,15 +484,7 @@ case $1 in
     '--createConfig') # Re-create the config used be shest. This is normally done for you. But will be useful if you upgrade shest and need the latest config. It will override what ever you have in place.
         createConfig
     ;;
-    '--createStage') # Create a new stage. --createStage stageName
-        requireParameter "stageName" "$2"
-        createStage "$2"
-    ;;
-    # TODO I need to re-think how I want to do this, since I've contradicted myself in the structure.
-    #'--createTestTypes') # Create the test types based on what's in the config.
-    #    createTestTypes
-    #;;
-    '--createTest') # Create a test in the current directory. --createTest testName.sh
+    '--createTest') # Create a test from a template in the current directory. --createTest testName.sh
         requireParameter "testName" "$2"
         createTest "$2"
     ;;
@@ -512,8 +504,13 @@ case $1 in
     '--doNothing')
         true
     ;;
-    *)
+    '')
         runTests
         exit $?
+    ;;
+    *)
+        showHelp
+        echo
+        errorExit "Unknown parameter \"$1\"."
     ;;
 esac
