@@ -220,6 +220,8 @@ function createStage
     local stageName="$1"
     
     mkdir -p "$shestHome/$shestDir/stages/$stageName"
+    
+    echo "Excellent. Now run \"$0 --createTestTypes\" to create the test types that you would like to run."
 }
 
 function createTestTypes
@@ -486,9 +488,10 @@ case $1 in
         requireParameter "stageName" "$2"
         createStage "$2"
     ;;
-    '--createTestTypes') # Create the test types based on what's in the config.
-        createTestTypes
-    ;;
+    # TODO I need to re-think how I want to do this, since I've contradicted myself in the structure.
+    #'--createTestTypes') # Create the test types based on what's in the config.
+    #    createTestTypes
+    #;;
     '--createTest') # Create a test in the current directory. --createTest testName.sh
         requireParameter "testName" "$2"
         createTest "$2"
