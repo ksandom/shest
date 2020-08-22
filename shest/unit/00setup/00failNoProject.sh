@@ -2,6 +2,7 @@
 # Shest should fail if a project has not been set up.
 
 . "$SHEST_SCRIPT" "--doNothing"
+
 testingShest
 
 result="$("$SHEST_SCRIPT" 2>&1)"
@@ -14,4 +15,3 @@ elif [ "$exitCode" == "0" ]; then
 else
     fail "Got value=\"$result\". Test=\"${result::43}\" Code=$exitCode Fail=$failCode."
 fi
-

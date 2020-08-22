@@ -263,7 +263,9 @@ function runTests
     failures=0
     warnings=0
     failuresAndWarnings=0
-    export RESULTS_FILE="$testLocation/$shestDir/tmp/results.csv"
+    if [ "$RESULTS_FILE" == '' ]; then
+        export RESULTS_FILE="$testLocation/$shestDir/tmp/results.csv"
+    fi
     
     # Do.
     export testLocation
@@ -326,6 +328,7 @@ function runTest
 
     export TEST_RESULT_FILE="$testLocation/$shestDir/tmp/$TEST_NAME.result"
     export TEST_DESCRIPTION="$(head -n2 "$TEST_FILE" | tail -n1)"
+    export TEST_COMMAND_OUTPUT="$testLocation/$shestDir/log/$TEST_NAME.commandOutput"
     export SHEST_CONFIG
     
     $TEST_FILE 2> "$testLocation/$shestDir/log/$TEST_NAME.log" 1>&2
@@ -412,6 +415,21 @@ function testingShest
     unset SHEST_CONFIG
 }
 
+function beginNestedShest
+{
+    # We need to run shest within shest without polluting the outside shest results with the internal shest results.
+    originalResultsFile="$RESULTS_FILE"
+    export RESULTS_FILE="${originalResultsFile}.inside"
+
+    # We need to get rid of the failed results, that will be written to the same place as the previous test, so that they don't interfere with the current run.
+    rm -f "$RESULTS_FILE"
+}
+
+function endNestedShest
+{
+    # This needs to be set back so that we write the results to the right place for the parent process.
+    export RESULTS_FILE="${originalResultsFile}"
+}
 
 # Stuff for sending test results to the right place.
 function pass
@@ -437,10 +455,10 @@ function fail
 
 function setResult
 {
-    local result="$1"
+    local testResult="$1"
     local message="$(echo "$2" | head -n 1)"
     
-    case $result in
+    case $testResult in
         'pass')
             colourResult="$colourPass"
         ;;
@@ -453,8 +471,10 @@ function setResult
     esac
     
     
-    echo -e "$indentation$colourInsignificant[$colourResult$result$colourInsignificant] $colourTestName$TEST_NAME$colourInsignificant: $colourTestMessage$message" > "$TEST_RESULT_FILE"
-    echo "$result,$TEST_NAME,$TEST_DESCRIPTION,$message" >> "$RESULTS_FILE"
+    echo -e "$indentation$colourInsignificant[$colourResult$testResult$colourInsignificant] $colourTestName$TEST_NAME$colourInsignificant: $colourTestMessage$message" > "$TEST_RESULT_FILE"
+    echo "$testResult,$TEST_NAME,$TEST_DESCRIPTION,$message" >> "$RESULTS_FILE"
+    
+    echo -e "$result" >> "$TEST_COMMAND_OUTPUT"
 }
 
 
