@@ -16,3 +16,31 @@ Shest is aimed at automating
 
 * bash
 * rsync
+
+## Install
+
+```bash
+sudo make install
+```
+
+## Using it
+
+### Get help
+
+```bash
+shest --help
+```
+
+### Get a project set up
+
+1. Go into the root directory of your project.
+1. Run
+    ```bash
+    shest --createProject
+    ```
+    This will create a folder called `shest` with all the relevant goodies.
+1. Check the contents of ./shest/config/general to make sure it fits well with your project.
+1. `cd shest/unit/myFirstStage`
+1. `rm exampleTest.sh` (You can actually skip this step and the next one, but I wanted you to see how to create a new test.)
+1. `shest --createTest` <- This will create exampleTest.sh that you can rename and edit to your liking.
+1. `shest` <- This will run all of the tests. This is essentially an alias of `shest --run`. You can also do `shest --run unit` (or similar) to specify just the unit tests.
