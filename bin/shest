@@ -258,6 +258,8 @@ function prepTests
 
 function runTests
 {
+    testTypesOverride="$1"
+    
     # Prep.
     prepTests
     failures=0
@@ -267,9 +269,15 @@ function runTests
         export RESULTS_FILE="$testLocation/$shestDir/tmp/results.csv"
     fi
     
+    if [ "$testTypesOverride" == '' ]; then
+        testTypesToTest="$testTypes"
+    else
+        testTypesToTest="$testTypesOverride"
+    fi
+    
     # Do.
     export testLocation
-    for testType in $testTypes; do
+    for testType in "$testTypesToTest"; do
         indentation=''
         if [ -e "$shestHome/$shestDir/$testType" ]; then
             echo -e "${indentation}${colourTestType}Test type${colourInsignificant}: ${colourNormal}$testType"
@@ -339,14 +347,19 @@ function runTest
 
 function showAnalytics
 {
-    passed="$(grep "^pass," "$RESULTS_FILE" | wc -l)"
-    warnings="$(grep "^warn," "$RESULTS_FILE" | wc -l)"
-    failures="$(grep "^fail," "$RESULTS_FILE" | wc -l)"
+    if [ -e "$RESULTS_FILE" ]; then
+        passed="$(grep "^pass," "$RESULTS_FILE" | wc -l)"
+        warnings="$(grep "^warn," "$RESULTS_FILE" | wc -l)"
+        failures="$(grep "^fail," "$RESULTS_FILE" | wc -l)"
+        
+        let failuresAndWarnings=$failures+$warnings
+        
+        echo
+        echo -e "${colourPass}Pass${colourInsignificant}: ${colourNormal}$passed${colourInsignificant}, ${colourWarn}Warn${colourInsignificant}: ${colourNormal}$warnings${colourInsignificant}, ${colourFail}Fail${colourInsignificant}: ${colourNormal}$failures"
+    else
+        errorExit "No results to show."
+    fi
     
-    let failuresAndWarnings=$failures+$warnings
-    
-    echo
-    echo -e "${colourPass}Pass${colourInsignificant}: ${colourNormal}$passed${colourInsignificant}, ${colourWarn}Warn${colourInsignificant}: ${colourNormal}$warnings${colourInsignificant}, ${colourFail}Fail${colourInsignificant}: ${colourNormal}$failures"
 }
 
 function cleanUp
@@ -508,8 +521,8 @@ case $1 in
         requireParameter "testName" "$2"
         createTest "$2"
     ;;
-    '--run') # Run the tests.
-        runTests
+    '--run') # Run the tests. --run [testType] . Eg eg --run "unit" , or --run "unit integration" .
+        runTests "$2"
         exit $?
     ;;
     '--help') # Show this help.
