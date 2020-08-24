@@ -277,7 +277,7 @@ function runTests
     
     # Do.
     export testLocation
-    for testType in "$testTypesToTest"; do
+    for testType in $testTypesToTest; do
         indentation=''
         if [ -e "$shestHome/$shestDir/$testType" ]; then
             echo -e "${indentation}${colourTestType}Test type${colourInsignificant}: ${colourNormal}$testType"
@@ -294,6 +294,7 @@ function runTests
                         
                         runTest
                     elif [ -d "$testItemEntity" ]; then
+                        export indentation='    '
                         echo -e "${indentation}${colourTestSet}Test set${colourInsignificant}: ${colourNormal}$testItem"
                         for subTestItem in $(ls -1 "$testItemEntity" | sort -u); do
                             export TEST_NAME="$stage_$testItem_$subTestItem"

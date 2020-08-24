@@ -1,0 +1,27 @@
+#!/bin/bash
+# Detect system specific settings so shest can start and run as possible.
+
+function testDecimalSleep
+{
+    # When I've seen sleep not accept decimals in the past, it has interpreted them as 0. Therefore failure of this test should result in a very fast return.
+    echo -n "Test whether sleep can accept decimals"
+    startTime="$(date +%s)"
+    for i in {1..30}; do
+        echo -n '.'
+        sleep 0.1
+    done
+    stopTime="$(date +%s)"
+    let duration=$stopTime-$startTime
+
+    if [ "$duration" -gt 2 ]; then
+        echo "pass"
+        return 0
+    else
+        echo "fail"
+        return 1
+    fi
+}
+
+if testDecimalSleep; then
+    sed -i 's/^fastTests=.*$/fastTests=true/g' /etc/shest/defaults
+fi

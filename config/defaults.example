@@ -15,3 +15,6 @@ colourTestMessage="$colourNormal"
 colourStage="$colourPurple"
 colourTestSet="$colourYellow"
 colourTestType="$colorBrightCyan"
+
+# Enable fast tests.
+fastTests=false

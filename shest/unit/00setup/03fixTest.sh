@@ -16,8 +16,6 @@ endNestedShest
 
 if [ ! "$exitCode" == 0 ]; then
     fail "Exit code was not 0. =$exitCode"
-    touch /tmp/failed
 else
     pass "Great!"
-    touch /tmp/passed
 fi
