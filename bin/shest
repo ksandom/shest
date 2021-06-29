@@ -247,13 +247,10 @@ function prepTests
     
     mkdir -p "$shestDir/"{tmp,log}
     
-    if [ ! -e "$shestDir" ]; then
-        if [ "$copyOrigin" == 'true' ]; then
-            # For most use-cases, this will be true. But if shest is configured to use the project directory as its testLocation, all of this stuff will already exist.
-            rsync -rl "$shestHome"/* .
-        fi
+    if [ "$copyOrigin" == 'true' ]; then
+        # For most use-cases, this will be true. But if shest is configured to use the project directory as its testLocation, all of this stuff will already exist.
+        rsync -rl "$shestHome"/* .
     fi
-    
 }
 
 function runTests
@@ -467,10 +464,119 @@ function fail
     setResult "fail" "$message"
 }
 
+function expect_exitCode
+{
+  local code="$1"
+  local message="${2:-:)}"
+  local resultOverride="${3:-fail}"
+  
+  expect_value "$exitCode" "$code" "expect_exitCode: $message" "$resultOverride" "expect_exitCode"
+}
+
+function expect_not_exitCode
+{
+  local code="$1"
+  local message="${2:-:)}"
+  local resultOverride="${3:-fail}"
+  
+  expect_not_value "$exitCode" "$code" "expect_not_exitCode: $message" "$resultOverride" "expect_not_exitCode"
+}
+
+function expect_value
+{
+  local actualValue="$1"
+  local expectedValue="$2"
+  local message="${3:-:)}"
+  local resultOverride="${4:-fail}"
+  local contextOverride="${5:-expect_value}"
+  
+  if [ "$actualValue" == "$expectedValue" ]; then
+    setResult "pass" "$message" "$contextOverride"
+  else
+    setResult "$resultOverride" "expect_value: \"$actualValue\" should equal \"$expectedValue\". $message" "$contextOverride"
+  fi
+}
+
+function expect_not_value
+{
+  local actualValue="$1"
+  local expectedValue="$2"
+  local message="${3:-:)}"
+  local resultOverride="${4:-fail}"
+  local contextOverride="${5:-expect_value}"
+  
+  if [ ! "$actualValue" == "$expectedValue" ]; then
+    setResult "pass" "$message" "$contextOverride"
+  else
+    setResult "$resultOverride" "expect_value: \"$actualValue\" should equal \"$expectedValue\". $message" "$contextOverride"
+  fi
+}
+
+function expect_exists
+{
+  local fileName="$1"
+  local message="${2:-:)}"
+  local resultOverride="${3:-fail}"
+  
+  if [ -e "$fileName" ]; then
+    setResult "pass" "$message" "expect_exists"
+  else
+    setResult "$resultOverride" "expect_exists: file/folder \"$fileName\" should exist. $message" "expect_exists"
+  fi
+}
+
+function expect_not_exists
+{
+  local fileName="$1"
+  local message="${2:-:)}"
+  local resultOverride="${3:-fail}"
+  
+  if [ ! -e "$fileName" ]; then
+    setResult "pass" "$message" "expect_not_exists"
+  else
+    setResult "$resultOverride" "expect_not_exists: file/folder \"$fileName\" should not exist. $message" "expect_not_exists"
+  fi
+}
+
+function expect_fileContains
+{
+  local fileName="$1"
+  local regex="$2"
+  local message="${3:-:)}"
+  local resultOverride="${4:-fail}"
+  
+  if grep -e "$regex" "$fileName"; then
+    setResult "pass" "$message" "expect_fileContains"
+  else
+    setResult "$resultOverride" "expect_fileContains: file \"$fileName\" should contain/match \"$regex\". $message" "expect_fileContains"
+  fi
+}
+
+function expect_not_fileContains
+{
+  local fileName="$1"
+  local regex="$2"
+  local message="${3:-:)}"
+  local resultOverride="${4:-fail}"
+  
+  if ! grep -e "$regex" "$fileName"; then
+    setResult "pass" "$message" "expect_not_fileContains"
+  else
+    setResult "$resultOverride" "expect_not_fileContains: file \"$fileName\" should contain/match \"$regex\". $message" "expect_not_fileContains"
+  fi
+}
+
 function setResult
 {
     local testResult="$1"
     local message="$(echo "$2" | head -n 1)"
+    local context="$3"
+    
+    if [ "$context" != '' ]; then
+      local contextOutput="$colourInsignificant/$colourTestName$context$colourInsignificant"
+    else
+      local contextOutput=''
+    fi
     
     case $testResult in
         'pass')
@@ -485,8 +591,8 @@ function setResult
     esac
     
     
-    echo -e "$indentation$colourInsignificant[$colourResult$testResult$colourInsignificant] $colourTestName$TEST_NAME$colourInsignificant: $colourTestMessage$message" > "$TEST_RESULT_FILE"
-    echo "$testResult,$TEST_NAME,$TEST_DESCRIPTION,$message" >> "$RESULTS_FILE"
+    echo -e "$indentation$colourInsignificant[$colourResult$testResult$colourInsignificant] $colourTestName$TEST_NAME$colourInsignificant$contextOutput: $colourTestMessage$message" >> "$TEST_RESULT_FILE"
+    echo "$testResult,$TEST_NAME,$context,$TEST_DESCRIPTION,$message" >> "$RESULTS_FILE"
     
     echo -e "$result" >> "$TEST_COMMAND_OUTPUT"
 }
