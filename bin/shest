@@ -566,6 +566,32 @@ function expect_not_fileContains
   fi
 }
 
+function expect_resultContains
+{
+  local regex="$1"
+  local message="${2:-:)}"
+  local resultOverride="${3:-fail}"
+  
+  if echo "$result" | grep -e "$regex"; then
+    setResult "pass" "$message" "expect_resultContains"
+  else
+    setResult "$resultOverride" "expect_resultContains: file \"$fileName\" should contain/match \"$regex\". $message" "expect_resultContains"
+  fi
+}
+
+function expect_not_resultContains
+{
+  local regex="$1"
+  local message="${2:-:)}"
+  local resultOverride="${3:-fail}"
+  
+  if ! echo "$result" | grep -e "$regex"; then
+    setResult "pass" "$message" "expect_not_resultContains"
+  else
+    setResult "$resultOverride" "expect_not_resultContains: file \"$fileName\" should not contain/match \"$regex\". $message" "expect_not_resultContains"
+  fi
+}
+
 function setResult
 {
     local testResult="$1"
