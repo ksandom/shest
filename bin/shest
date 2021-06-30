@@ -51,17 +51,10 @@ newTest="#!/bin/bash
 result=\"\$(doSomething)\"
 exitCode="\$?"
 
-
-# NOTE that passCode, warnCode, and failCode are not set for you since they may be different depending on what you are testing. Therefore you should either set these values, or replace them with what is meaningful for you.
-if [ \"\$result\" == 'something expected' ] && [ \"\$exitCode\" == \"\$passCode\" ] ; then
-    pass \"Great!\"
-elif [ \"\$result\" == 'something good, but might be a problem' ]  && [ \"\$exitCode\" == \"\$warnCode\" ] ; then
-    warn \"This is within range, but could be a problem. value=\\\"\$result\\\".\"
-elif [ \"\$exitCode\" == \"\$failCode\" ]; then
-    fail \"Got exitCode \$exitCode. Value=\\\"\$result\\\".\"
-else
-    fail \"Got value=\\\"\$result\\\" and exit code=\$exitCode.\"
-fi
+# You can run $0 --listExpects to find commands that might be useful to you like
+# expect_exitCode 0
+# Or
+# expect_exists the_meaning_of_life.txt
 "
 
 colourReset='\033[0m'
@@ -464,7 +457,12 @@ function fail
     setResult "fail" "$message"
 }
 
-function expect_exitCode
+function listExpects
+{
+    grep '^function expect_' "$0" | sed 's/^function //g;s/ # / /g'
+}
+
+function expect_exitCode # expectedCode [message] [resultOverride]
 {
   local code="$1"
   local message="${2:-:)}"
@@ -473,7 +471,7 @@ function expect_exitCode
   expect_value "$exitCode" "$code" "expect_exitCode: $message" "$resultOverride" "expect_exitCode"
 }
 
-function expect_not_exitCode
+function expect_not_exitCode # unexpectedCode [message] [resultOverride]
 {
   local code="$1"
   local message="${2:-:)}"
@@ -482,7 +480,7 @@ function expect_not_exitCode
   expect_not_value "$exitCode" "$code" "expect_not_exitCode: $message" "$resultOverride" "expect_not_exitCode"
 }
 
-function expect_value
+function expect_value # actualValue expectedValue [message] [resultOverride] [contextOverride]
 {
   local actualValue="$1"
   local expectedValue="$2"
@@ -497,7 +495,7 @@ function expect_value
   fi
 }
 
-function expect_not_value
+function expect_not_value # actualValue unexpectedValue [message] [resultOverride] [contextOverride]
 {
   local actualValue="$1"
   local expectedValue="$2"
@@ -512,7 +510,7 @@ function expect_not_value
   fi
 }
 
-function expect_exists
+function expect_exists # fileOrDirectoryPath [message] [resultOverride]
 {
   local fileName="$1"
   local message="${2:-:)}"
@@ -525,7 +523,7 @@ function expect_exists
   fi
 }
 
-function expect_not_exists
+function expect_not_exists # fileOrDirectoryPath [message] [resultOverride]
 {
   local fileName="$1"
   local message="${2:-:)}"
@@ -538,7 +536,7 @@ function expect_not_exists
   fi
 }
 
-function expect_fileContains
+function expect_fileContains # fileOrDirectoryPath regexOrString [message] [resultOverride]
 {
   local fileName="$1"
   local regex="$2"
@@ -552,7 +550,7 @@ function expect_fileContains
   fi
 }
 
-function expect_not_fileContains
+function expect_not_fileContains # fileOrDirectoryPath regexOrString [message] [resultOverride]
 {
   local fileName="$1"
   local regex="$2"
@@ -566,7 +564,7 @@ function expect_not_fileContains
   fi
 }
 
-function expect_resultContains
+function expect_resultContains # regexOrString [message] [resultOverride]
 {
   local regex="$1"
   local message="${2:-:)}"
@@ -575,11 +573,11 @@ function expect_resultContains
   if echo "$result" | grep -e "$regex"; then
     setResult "pass" "$message" "expect_resultContains"
   else
-    setResult "$resultOverride" "expect_resultContains: file \"$fileName\" should contain/match \"$regex\". $message" "expect_resultContains"
+    setResult "$resultOverride" "expect_resultContains: \$result should contain/match \"$regex\". $message" "expect_resultContains"
   fi
 }
 
-function expect_not_resultContains
+function expect_not_resultContains # regexOrString [message] [resultOverride]
 {
   local regex="$1"
   local message="${2:-:)}"
@@ -588,7 +586,7 @@ function expect_not_resultContains
   if ! echo "$result" | grep -e "$regex"; then
     setResult "pass" "$message" "expect_not_resultContains"
   else
-    setResult "$resultOverride" "expect_not_resultContains: file \"$fileName\" should not contain/match \"$regex\". $message" "expect_not_resultContains"
+    setResult "$resultOverride" "expect_not_resultContains: \$result should not contain/match \"$regex\". $message" "expect_not_resultContains"
   fi
 }
 
@@ -657,6 +655,9 @@ case $1 in
     '--run') # Run the tests. --run [testType] . Eg eg --run "unit" , or --run "unit integration" .
         runTests "$2"
         exit $?
+    ;;
+    '--listExpects') # List out the expect commands that can be used in tests.
+        listExpects
     ;;
     '--help') # Show this help.
         showHelp
