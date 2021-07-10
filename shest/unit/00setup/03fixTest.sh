@@ -9,13 +9,9 @@ beginNestedShest
 sed -i 's#doSomething#true#g; s#^if.*then#if [ "$exitCode" == 0 ]; then#g' shest/unit/myFirstStage/exampleTest.sh
 
 # Do the work.
-"$SHEST_SCRIPT"
+result="$SHEST_SCRIPT"
 exitCode=$?
 
 endNestedShest
 
-if [ ! "$exitCode" == 0 ]; then
-    fail "Exit code was not 0. =$exitCode"
-else
-    pass "Great!"
-fi
+expect_exitCode 0

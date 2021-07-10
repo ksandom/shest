@@ -28,17 +28,17 @@ done
 
 # Do the work.
 startTime="$(date +%s)"
-"$SHEST_SCRIPT"
+result="$($SHEST_SCRIPT)"
 exitCode=$?
 stopTime="$(date +%s)"
 let duration=$stopTime-$startTime
 
 endNestedShest
 
-if [ ! "$exitCode" == 0 ]; then
-    fail "Exit code was not 0. =$exitCode"
-elif [ "$duration" -gt "$moreThanSecondsIsFail" ]; then
+expect_exitCode 0
+
+if [ "$duration" -gt "$moreThanSecondsIsFail" ]; then
     fail "The tests took too long ($duration>$moreThanSecondsIsFail). This implies that the testSet tests are not running in parallel. OR Your computer is really, REALLY slow."
 else
-    pass "Great! duration=$duration moreThanSecondsIsFail=$moreThanSecondsIsFail."
+    pass "Tests were quick enough that they appeared to run in parallel."
 fi

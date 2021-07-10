@@ -55,6 +55,8 @@ exitCode="\$?"
 # expect_exitCode 0
 # Or
 # expect_exists the_meaning_of_life.txt
+
+expect_exitCode 0
 "
 
 colourReset='\033[0m'

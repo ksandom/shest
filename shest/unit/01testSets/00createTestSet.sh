@@ -32,10 +32,5 @@ numberOfTests="$(wc -l shest/tmp/results.csv.inside | awk '{print $1}')"
 
 endNestedShest
 
-if [ ! "$exitCode" == 0 ]; then
-    fail "Exit code was not 0. =$exitCode"
-elif [ "$numberOfTests" != 27 ]; then
-    fail "Ran the wrong number of tests ($numberOfTests). Expected 27."
-else
-    pass "Great!"
-fi
+expect_exitCode 0
+expect_value 27 "$numberOfTests" "Number of tests."
