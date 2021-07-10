@@ -590,6 +590,34 @@ function expect_not_resultContains # regexOrString [message] [resultOverride]
   fi
 }
 
+function expect_resultLines # numberOfLines [message] [resultOverride]
+{
+  local numberOfLines="$1"
+  local message="${2:-:)}"
+  local resultOverride="${3:-fail}"
+  local actualNumberOflines="$(echo "$result" | wc -l)"
+  
+  if [ "$actualNumberOflines" -eq "$numberOfLines" ] ; then
+    setResult "pass" "$message" "expect_resultLines"
+  else
+    setResult "$resultOverride" "expect_resultLines \$result should have exactly $numberOfLines lines, but actually has $actualNumberOflines lines. $message" "expect_resultLines"
+  fi
+}
+
+function expect_not_resultLines # numberOfLines [message] [resultOverride]
+{
+  local numberOfLines="$1"
+  local message="${2:-:)}"
+  local resultOverride="${3:-fail}"
+  local actualNumberOflines="$(echo "$result" | wc -l)"
+  
+  if [ ! "$actualNumberOflines" -eq "$numberOfLines" ] ; then
+    setResult "pass" "$message" "expect_not_resultLines"
+  else
+    setResult "$resultOverride" "expect_not_resultLines \$result should not have $numberOfLines lines, but actually has $actualNumberOflines lines. $message" "expect_not_resultLines"
+  fi
+}
+
 function setResult
 {
     local testResult="$1"
