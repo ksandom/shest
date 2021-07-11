@@ -51,13 +51,21 @@ newTest="#!/bin/bash
 result=\"\$(doSomething)\"
 exitCode="\$?"
 
-# You can run $0 --listExpects to find commands that might be useful to you like
-# expect_exitCode 0
-# Or
-# expect_exists the_meaning_of_life.txt
-
 expect_exitCode 0
-"
+
+
+# Here is a list of expect_.* helper functions provided via $0 --listExpects :
+#"
+
+newTestFooter="
+
+# expect_.* is preferred, but if you need more flexibility, you can also write more custom tests like this:
+#
+# if [ 1 -eq 1 ]; then
+#   pass "Yay!"
+# else
+#   fail \"1 should definitely have equalled 1.\"
+# fi"
 
 colourReset='\033[0m'
 colourBlack='\033[0;30m'
@@ -231,6 +239,9 @@ function createTest
     local fileName="$1"
     
     echo "$newTest" > "$fileName"
+    $0 --listExpects | sed 's/^/# /g' >> "$fileName"
+    echo "$newTestFooter" >> "$fileName"
+    
     chmod 755 "$fileName"
 }
 
