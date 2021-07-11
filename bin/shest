@@ -620,6 +620,38 @@ function expect_not_resultLines # numberOfLines [message] [resultOverride]
   fi
 }
 
+function expect_condition # conditionPart1 conditionPart2 conditionPart3 [message] [resultOverride] . Eg "$actualValue" -gt 2.    resolves to [ "$actualValue" "-gt" "2" ]
+{
+  local conditionPart1="$1"
+  local conditionPart2="$2"
+  local conditionPart3="$3"
+  local message="${4:-:)}"
+  local resultOverride="${5:-fail}"
+  local actualNumberOflines="$(echo "$result" | wc -l)"
+  
+  if [ "$conditionPart1" "$conditionPart2" "$conditionPart3" ] ; then
+    setResult "pass" "$message" "expect_condition"
+  else
+    setResult "$resultOverride" "expect_condition The following condition should return success (0): [ \"$conditionPart1\" \"$conditionPart2\" \"$conditionPart3\" ]. $message" "expect_condition"
+  fi
+}
+
+function expect_not_condition # conditionPart1 conditionPart2 conditionPart3 [message] [resultOverride] . Eg "$actualValue" -gt 2    resolves to [ ! "$actualValue" "-gt" "2" ]
+{
+  local conditionPart1="$1"
+  local conditionPart2="$2"
+  local conditionPart3="$3"
+  local message="${4:-:)}"
+  local resultOverride="${5:-fail}"
+  local actualNumberOflines="$(echo "$result" | wc -l)"
+  
+  if [ ! "$conditionPart1" "$conditionPart2" "$conditionPart3" ] ; then
+    setResult "pass" "$message" "expect_not_condition"
+  else
+    setResult "$resultOverride" "expect_not_condition The following condition should return success (0): [ ! \"$conditionPart1\" \"$conditionPart2\" \"$conditionPart3\" ]. $message" "expect_not_condition"
+  fi
+}
+
 function setResult
 {
     local testResult="$1"

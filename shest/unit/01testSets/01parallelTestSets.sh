@@ -36,9 +36,4 @@ let duration=$stopTime-$startTime
 endNestedShest
 
 expect_exitCode 0
-
-if [ "$duration" -gt "$moreThanSecondsIsFail" ]; then
-    fail "The tests took too long ($duration>$moreThanSecondsIsFail). This implies that the testSet tests are not running in parallel. OR Your computer is really, REALLY slow."
-else
-    pass "Tests were quick enough that they appeared to run in parallel."
-fi
+expect_not_condition "$duration" -gt "$moreThanSecondsIsFail" "If this fails, this implies that the testSet tests are not running in parallel. OR Your computer is really, REALLY slow."
