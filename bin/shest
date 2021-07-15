@@ -91,7 +91,8 @@ colourPass="$colourGreen"
 colourWarn="$colourBrown"
 colourFail="$colourRed"
 colourInsignificant="$colourDarkGrey"
-colourTestName="$colourCyan"
+colourTestName="$colourNormal"
+colourContext="$colourCyan"
 colourTestMessage="$colourNormal"
 colourStage="$colourPurple"
 colourTestSet="$colourYellow"
@@ -342,6 +343,7 @@ function runTest
     export TEST_DESCRIPTION="$(head -n2 "$TEST_FILE" | tail -n1)"
     export TEST_COMMAND_OUTPUT="$testLocation/$shestDir/log/$TEST_NAME.commandOutput"
     export SHEST_CONFIG
+    export HOME="$(pwd)"
     
     $TEST_FILE 2> "$testLocation/$shestDir/log/$TEST_NAME.log" 1>&2
     cat "$TEST_RESULT_FILE"
@@ -478,26 +480,26 @@ function listExpects
 function expect_exitCode # expectedCode [message] [resultOverride]
 {
   local code="$1"
-  local message="${2:-:)}"
+  local message="${2:-}"
   local resultOverride="${3:-fail}"
   
-  expect_value "$exitCode" "$code" "expect_exitCode: $message" "$resultOverride" "expect_exitCode"
+  expect_value "$exitCode" "$code" "$message" "$resultOverride" "expect_exitCode"
 }
 
 function expect_not_exitCode # unexpectedCode [message] [resultOverride]
 {
   local code="$1"
-  local message="${2:-:)}"
+  local message="${2:-}"
   local resultOverride="${3:-fail}"
   
-  expect_not_value "$exitCode" "$code" "expect_not_exitCode: $message" "$resultOverride" "expect_not_exitCode"
+  expect_not_value "$exitCode" "$code" " $message" "$resultOverride" "expect_not_exitCode"
 }
 
 function expect_value # actualValue expectedValue [message] [resultOverride] [contextOverride]
 {
   local actualValue="$1"
   local expectedValue="$2"
-  local message="${3:-:)}"
+  local message="${3:-}"
   local resultOverride="${4:-fail}"
   local contextOverride="${5:-expect_value}"
   
@@ -512,7 +514,7 @@ function expect_not_value # actualValue unexpectedValue [message] [resultOverrid
 {
   local actualValue="$1"
   local expectedValue="$2"
-  local message="${3:-:)}"
+  local message="${3:-}"
   local resultOverride="${4:-fail}"
   local contextOverride="${5:-expect_value}"
   
@@ -526,7 +528,7 @@ function expect_not_value # actualValue unexpectedValue [message] [resultOverrid
 function expect_exists # fileOrDirectoryPath [message] [resultOverride]
 {
   local fileName="$1"
-  local message="${2:-:)}"
+  local message="${2:-}"
   local resultOverride="${3:-fail}"
   
   if [ -e "$fileName" ]; then
@@ -539,7 +541,7 @@ function expect_exists # fileOrDirectoryPath [message] [resultOverride]
 function expect_not_exists # fileOrDirectoryPath [message] [resultOverride]
 {
   local fileName="$1"
-  local message="${2:-:)}"
+  local message="${2:-}"
   local resultOverride="${3:-fail}"
   
   if [ ! -e "$fileName" ]; then
@@ -553,7 +555,7 @@ function expect_fileContains # fileOrDirectoryPath regexOrString [message] [resu
 {
   local fileName="$1"
   local regex="$2"
-  local message="${3:-:)}"
+  local message="${3:-}"
   local resultOverride="${4:-fail}"
   
   if grep -e "$regex" "$fileName"; then
@@ -567,7 +569,7 @@ function expect_not_fileContains # fileOrDirectoryPath regexOrString [message] [
 {
   local fileName="$1"
   local regex="$2"
-  local message="${3:-:)}"
+  local message="${3:-}"
   local resultOverride="${4:-fail}"
   
   if ! grep -e "$regex" "$fileName"; then
@@ -580,7 +582,7 @@ function expect_not_fileContains # fileOrDirectoryPath regexOrString [message] [
 function expect_resultContains # regexOrString [message] [resultOverride]
 {
   local regex="$1"
-  local message="${2:-:)}"
+  local message="${2:-}"
   local resultOverride="${3:-fail}"
   
   if echo "$result" | grep -e "$regex"; then
@@ -593,7 +595,7 @@ function expect_resultContains # regexOrString [message] [resultOverride]
 function expect_not_resultContains # regexOrString [message] [resultOverride]
 {
   local regex="$1"
-  local message="${2:-:)}"
+  local message="${2:-}"
   local resultOverride="${3:-fail}"
   
   if ! echo "$result" | grep -e "$regex"; then
@@ -606,7 +608,7 @@ function expect_not_resultContains # regexOrString [message] [resultOverride]
 function expect_resultLines # numberOfLines [message] [resultOverride]
 {
   local numberOfLines="$1"
-  local message="${2:-:)}"
+  local message="${2:-}"
   local resultOverride="${3:-fail}"
   local actualNumberOflines="$(echo "$result" | wc -l)"
   
@@ -620,7 +622,7 @@ function expect_resultLines # numberOfLines [message] [resultOverride]
 function expect_not_resultLines # numberOfLines [message] [resultOverride]
 {
   local numberOfLines="$1"
-  local message="${2:-:)}"
+  local message="${2:-}"
   local resultOverride="${3:-fail}"
   local actualNumberOflines="$(echo "$result" | wc -l)"
   
@@ -636,7 +638,7 @@ function expect_condition # conditionPart1 conditionPart2 conditionPart3 [messag
   local conditionPart1="$1"
   local conditionPart2="$2"
   local conditionPart3="$3"
-  local message="${4:-:)}"
+  local message="${4:-}"
   local resultOverride="${5:-fail}"
   local actualNumberOflines="$(echo "$result" | wc -l)"
   
@@ -652,7 +654,7 @@ function expect_not_condition # conditionPart1 conditionPart2 conditionPart3 [me
   local conditionPart1="$1"
   local conditionPart2="$2"
   local conditionPart3="$3"
-  local message="${4:-:)}"
+  local message="${4:-}"
   local resultOverride="${5:-fail}"
   local actualNumberOflines="$(echo "$result" | wc -l)"
   
@@ -670,7 +672,7 @@ function setResult
     local context="$3"
     
     if [ "$context" != '' ]; then
-      local contextOutput="$colourInsignificant/$colourTestName$context$colourInsignificant"
+      local contextOutput="$colourInsignificant / $colourContext$context$colourInsignificant"
     else
       local contextOutput=''
     fi
@@ -687,8 +689,13 @@ function setResult
         ;;
     esac
     
+    if [ "$message" == '' ]; then
+      local messageSeparator=''
+    else
+      local messageSeparator=':'
+    fi
     
-    echo -e "$indentation$colourInsignificant[$colourResult$testResult$colourInsignificant] $colourTestName$TEST_NAME$colourInsignificant$contextOutput: $colourTestMessage$message" >> "$TEST_RESULT_FILE"
+    echo -e "$indentation$colourInsignificant[$colourResult$testResult$colourInsignificant] $colourTestName$TEST_NAME$colourInsignificant$contextOutput$messageSeparator $colourTestMessage$message" >> "$TEST_RESULT_FILE"
     echo "$testResult,$TEST_NAME,$context,$TEST_DESCRIPTION,$message" >> "$RESULTS_FILE"
     
     echo -e "$result" >> "$TEST_COMMAND_OUTPUT"
