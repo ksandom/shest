@@ -23,7 +23,7 @@ Shest is aimed at automating
 ### For development of duse
 
 * [shest](https://github.com/ksandom/shest) for unit testing.
-* [shellcheck](https://github.com/koalaman/shellcheck). for linting.
+* [shellcheck](https://github.com/koalaman/shellcheck) for linting.
 
 ## Install
 
