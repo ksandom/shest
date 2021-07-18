@@ -1,7 +1,7 @@
 # shest
 A tool for sequenced internal and external automated testing of shell scripts and other command line tools.
 
-If you're looking for bash unit tests, you're almost certainly better off with [bats](https://github.com/sstephenson/bats), which looks excellent for this purpose.
+You may also want to check out [bats](https://github.com/bats-core/bats-core), which is a similar tool that wasn't suitable for my needs, but may be for yours.
 
 Shest is aimed at automating
 
@@ -14,8 +14,16 @@ Shest is aimed at automating
 
 ## Requirements
 
-* bash
-* rsync
+### For operation
+
+* [bash](https://man7.org/linux/man-pages/man1/bash.1.html).
+* [rsync](https://man7.org/linux/man-pages/man1/rsync.1.html).
+* [readlink](https://man7.org/linux/man-pages/man1/readlink.1.html).
+
+### For development of duse
+
+* [shest](https://github.com/ksandom/shest) for unit testing.
+* [shellcheck](https://github.com/koalaman/shellcheck). for linting.
 
 ## Install
 
