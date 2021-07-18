@@ -12,6 +12,13 @@ Shest is aimed at automating
     * Integration testing.
     * Regression testing.
 
+## Some projects using shest
+
+* [shest](https://github.com/ksandom/shest) (itself).
+* [duse](https://github.com/ksandom/duse) - Proactively manage media caching.
+
+More to be listed soon ;)
+
 ## Requirements
 
 ### For operation
@@ -22,7 +29,7 @@ Shest is aimed at automating
 
 ### For development of duse
 
-* [shest](https://github.com/ksandom/shest) for unit testing.
+* [shest](https://github.com/ksandom/shest) (itself) for unit testing.
 * [shellcheck](https://github.com/koalaman/shellcheck) for linting.
 
 ## Install
