@@ -263,6 +263,7 @@ function prepTests
 function runTests
 {
     testTypesOverride="$1"
+    export ORIGIN="$(findShestHome)"
     
     # Prep.
     prepTests
@@ -642,6 +643,8 @@ function expect_condition # conditionPart1 conditionPart2 conditionPart3 [messag
   local resultOverride="${5:-fail}"
   local actualNumberOflines="$(echo "$result" | wc -l)"
   
+  # TODO This is effectively breaking shellcheck below this point. It would be great to either find another way of achieving this test (eval? nested bash?) without breaking shellcheck. Failing that, it would be great to minimise the impact of the breakage.
+  # shellcheck disable=SC1009,SC1073,SC1072
   if [ "$conditionPart1" "$conditionPart2" "$conditionPart3" ] ; then
     setResult "pass" "$message" "expect_condition"
   else

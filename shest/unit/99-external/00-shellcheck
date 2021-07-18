@@ -1,0 +1,15 @@
+#!/bin/bash
+# Test that shellcheck passes.
+
+. "$SHEST_SCRIPT" "--doNothing"
+
+if which shellcheck > /dev/null; then
+  # NOTE that in this I've used $ORIGIN instead of $HOME for this unit test because I have copyOrigin=false in shest/config/general for nested shest testing. You will almost never need to do this. So you can safely use $HOME. But if you need to access something directly from the repo, you can do so via $ORIGIN. Please consider carefully before actually using this. I don't promise it will continue to work in the future.
+  result="$(shellcheck "$ORIGIN/bin/shest" 2>&1)"
+  exitCode=$?
+
+  expect_exitCode 0 "$result"
+  expect_resultLines 1
+else
+  warn "Shellcheck does not appear to be installed."
+fi
