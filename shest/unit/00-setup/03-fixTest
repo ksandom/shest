@@ -9,8 +9,7 @@ beginNestedShest
 sed -i 's#doSomething#true#g; s#^if.*then#if [ "$exitCode" == 0 ]; then#g' shest/unit/myFirstStage/exampleTest
 
 # Do the work.
-result="$SHEST_SCRIPT"
-exitCode=$?
+$SHEST_SCRIPT ## Test this.
 
 endNestedShest
 

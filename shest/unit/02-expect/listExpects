@@ -3,8 +3,7 @@
 
 . "$SHEST_SCRIPT" "--doNothing"
 
-result="$(shest --listExpects)"
-exitCode=$?
+shest --listExpects ## Test this.
 
 expect_exitCode 0
 expect_resultContains expect_exitCode

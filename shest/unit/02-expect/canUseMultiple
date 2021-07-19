@@ -3,8 +3,7 @@
 
 . "$SHEST_SCRIPT" "--doNothing"
 
-result="$(true)"
-exitCode=$?
+true ## Test this.
 
 expect_value 0 0
 expect_exitCode 0

@@ -6,8 +6,7 @@
 beginNestedShest
 
 # Do the work.
-result="$("$SHEST_SCRIPT")"
-exitCode=$?
+"$SHEST_SCRIPT" ## Test this.
 
 endNestedShest
 

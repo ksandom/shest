@@ -24,8 +24,7 @@ cp shest/unit/testSets/00testSet/* shest/unit/testSets/02testSet
 rm -Rf shest/unit/myFirstStage
 
 # Do the work.
-"$SHEST_SCRIPT"
-exitCode=$?
+"$SHEST_SCRIPT" ## Test this.
 
 # How many tests did we run? - This is using the assumptions that there is only our
 numberOfTests="$(wc -l shest/tmp/results.csv.inside | awk '{print $1}')"

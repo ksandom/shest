@@ -3,8 +3,7 @@
 
 . "$SHEST_SCRIPT" "--doNothing"
 
-result="$("$SHEST_SCRIPT" --createProject 2>&1)"
-exitCode=$?
+"$SHEST_SCRIPT" --createProject ## Test this.
 
 expect_exitCode 0
 expect_exists "shest/unit/myFirstStage/exampleTest" "A dummy test in a stage should be created."

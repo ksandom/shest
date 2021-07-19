@@ -3,10 +3,6 @@
 
 . "$SHEST_SCRIPT" "--doNothing"
 
-true ## Test this.
+date asd ## Test this.
 
-expect_exitCode 0
-
-false ## Test this.
-
-expect_exitCode 1
+expect_errorContains "invalid date"
