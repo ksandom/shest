@@ -19,7 +19,7 @@ beginNestedShest
 rm -Rf shest/unit/testSets/0{1,2}testSet
 
 # Add an artificial delay to the tests.
-for testFile in $(find -iname '*.sh'); do
+for testFile in $(find -type f -iname '*'); do
     echo "sleep $interval" >> "$testFile"
 done
 

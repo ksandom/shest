@@ -229,7 +229,7 @@ function createTestTypes
         if [ ! -e "$finalDir" ]; then
             mkdir -p "$testType/myFirstStage"
             cd "$testType/myFirstStage"
-            createTest "exampleTest.sh"
+            createTest "exampleTest"
             cd ~-
         fi
     done
@@ -726,7 +726,7 @@ function showHelp
 case $1 in
     '--createProject') # Create a bare project in the current directory.
         createProject
-        echo "Excellent. Now take a look at the config in \"$shestHome/config/general\", and then create a stage with \"$0 --createStage stageName\", then run \"$0 --createTestTypes\"."
+        echo "Excellent. Now take a look at the config in \"$shestHome/config/general\", and then browse around in the unit, regression, and integration directories. Some example tests have been created for you. When you'd like to create your own, you can do so by first creating a stage with \"mkdir -p shest/unit/stageName ; cd shest/unit/stageName\", then run \"$0 --createTest aNewTest\". You can read more at https://github.com/ksandom/shest ."
     ;;
     '--createConfig') # Re-create the config used be shest. This is normally done for you. But will be useful if you upgrade shest and need the latest config. It will override what ever you have in place.
         createConfig

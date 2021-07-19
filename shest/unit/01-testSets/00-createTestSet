@@ -7,15 +7,15 @@ beginNestedShest
 
 # Populate with some testSets and tests.
 mkdir -p shest/unit/testSets/0{0,1,2}testSet
-cp shest/unit/myFirstStage/exampleTest.sh shest/unit/testSets/00testSet/00test.sh
-cp shest/unit/myFirstStage/exampleTest.sh shest/unit/testSets/00testSet/01test.sh
-cp shest/unit/myFirstStage/exampleTest.sh shest/unit/testSets/00testSet/02test.sh
-cp shest/unit/myFirstStage/exampleTest.sh shest/unit/testSets/00testSet/03test.sh
-cp shest/unit/myFirstStage/exampleTest.sh shest/unit/testSets/00testSet/04test.sh
-cp shest/unit/myFirstStage/exampleTest.sh shest/unit/testSets/00testSet/05test.sh
-cp shest/unit/myFirstStage/exampleTest.sh shest/unit/testSets/00testSet/06test.sh
-cp shest/unit/myFirstStage/exampleTest.sh shest/unit/testSets/00testSet/07test.sh
-cp shest/unit/myFirstStage/exampleTest.sh shest/unit/testSets/00testSet/08test.sh
+cp shest/unit/myFirstStage/exampleTest shest/unit/testSets/00testSet/00test
+cp shest/unit/myFirstStage/exampleTest shest/unit/testSets/00testSet/01test
+cp shest/unit/myFirstStage/exampleTest shest/unit/testSets/00testSet/02test
+cp shest/unit/myFirstStage/exampleTest shest/unit/testSets/00testSet/03test
+cp shest/unit/myFirstStage/exampleTest shest/unit/testSets/00testSet/04test
+cp shest/unit/myFirstStage/exampleTest shest/unit/testSets/00testSet/05test
+cp shest/unit/myFirstStage/exampleTest shest/unit/testSets/00testSet/06test
+cp shest/unit/myFirstStage/exampleTest shest/unit/testSets/00testSet/07test
+cp shest/unit/myFirstStage/exampleTest shest/unit/testSets/00testSet/08test
 
 cp shest/unit/testSets/00testSet/* shest/unit/testSets/01testSet
 cp shest/unit/testSets/00testSet/* shest/unit/testSets/02testSet
