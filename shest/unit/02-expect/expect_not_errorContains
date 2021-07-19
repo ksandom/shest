@@ -5,8 +5,4 @@
 
 true ## Test this.
 
-expect_exitCode 0
-
-false ## Test this.
-
-expect_exitCode 1
+expect_not_errorContains "invalid date"

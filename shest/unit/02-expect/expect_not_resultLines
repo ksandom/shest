@@ -3,7 +3,6 @@
 
 . "$SHEST_SCRIPT" "--doNothing"
 
-result="$(echo -e "blah\nwheee")"
-exitCode=$?
+echo -e "blah\nwheee" ## Test this.
 
 expect_not_resultLines 1

@@ -5,8 +5,7 @@
 
 testingShest
 
-result="$("$SHEST_SCRIPT" 2>&1)"
-exitCode=$?
+"$SHEST_SCRIPT" ## Test this.
 
 expect_exitCode 1
-expect_value 'It looks like shest has not been initialised' "${result::44}"
+expect_errorContains 'It looks like shest has not been initialised'

@@ -3,7 +3,6 @@
 
 . "$SHEST_SCRIPT" "--doNothing"
 
-result="$(true)"
-exitCode=$?
+true ## Test this.
 
 expect_exists "$0"

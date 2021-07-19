@@ -28,8 +28,7 @@ done
 
 # Do the work.
 startTime="$(date +%s)"
-result="$($SHEST_SCRIPT)"
-exitCode=$?
+$SHEST_SCRIPT ## Test this.
 stopTime="$(date +%s)"
 let duration=$stopTime-$startTime
 

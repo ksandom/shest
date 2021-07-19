@@ -48,8 +48,7 @@ newTest="#!/bin/bash
 
 . \"\$SHEST_SCRIPT\" \"--doNothing\"
 
-result=\"\$(doSomething)\"
-exitCode="\$?"
+doSomething ## Test this.
 
 expect_exitCode 0
 
@@ -341,12 +340,17 @@ function runTest
     cd "$testLocation"
 
     export TEST_RESULT_FILE="$testLocation/$shestDir/tmp/$TEST_NAME.result"
+    export TEST_SCRIPT_FILE="$testLocation/$shestDir/tmp/$TEST_NAME.script"
+    export TEST_ERROR_FILE="$testLocation/$shestDir/tmp/$TEST_NAME.error"
     export TEST_DESCRIPTION="$(head -n2 "$TEST_FILE" | tail -n1)"
     export TEST_COMMAND_OUTPUT="$testLocation/$shestDir/log/$TEST_NAME.commandOutput"
     export SHEST_CONFIG
     export HOME="$(pwd)"
     
-    $TEST_FILE 2> "$testLocation/$shestDir/log/$TEST_NAME.log" 1>&2
+    sed 's#^\(.*\)\#\# Test this.'"#result=\"\$(\1 2>$TEST_ERROR_FILE)\"\nexitCode="\$?"#g" "$TEST_FILE" > "$TEST_SCRIPT_FILE"
+    
+    chmod 755 "$TEST_SCRIPT_FILE"
+    "$TEST_SCRIPT_FILE" 2> "$testLocation/$shestDir/log/$TEST_NAME.log" 1>&2
     cat "$TEST_RESULT_FILE"
     
     cd "$startDir"
@@ -603,6 +607,34 @@ function expect_not_resultContains # regexOrString [message] [resultOverride]
     setResult "pass" "$message" "expect_not_resultContains"
   else
     setResult "$resultOverride" "expect_not_resultContains: \$result should not contain/match \"$regex\". $message" "expect_not_resultContains"
+  fi
+}
+
+function expect_errorContains # regexOrString [message] [resultOverride] - Requires the "## Test this." syntax.
+{
+  local fileName="$TEST_ERROR_FILE"
+  local regex="$1"
+  local message="${2:-}"
+  local resultOverride="${3:-fail}"
+  
+  if grep -e "$regex" "$fileName"; then
+    setResult "pass" "$message" "expect_errorContains"
+  else
+    setResult "$resultOverride" "expect_errorContains file \"$fileName\" should contain/match \"$regex\". $message" "expect_errorContains"
+  fi
+}
+
+function expect_not_errorContains # regexOrString [message] [resultOverride] - Requires the "## Test this." syntax.
+{
+  local fileName="$TEST_ERROR_FILE"
+  local regex="$1"
+  local message="${2:-}"
+  local resultOverride="${3:-fail}"
+  
+  if ! grep -e "$regex" "$fileName"; then
+    setResult "pass" "$message" "expect_not_errorContains"
+  else
+    setResult "$resultOverride" "expect_not_errorContains file \"$fileName\" should contain/match \"$regex\". $message" "expect_not_errorContains"
   fi
 }
 
