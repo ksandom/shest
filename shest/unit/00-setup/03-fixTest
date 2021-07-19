@@ -6,7 +6,7 @@
 beginNestedShest
 
 # Do the fix.
-sed -i 's#doSomething#true#g; s#^if.*then#if [ "$exitCode" == 0 ]; then#g' shest/unit/myFirstStage/exampleTest.sh
+sed -i 's#doSomething#true#g; s#^if.*then#if [ "$exitCode" == 0 ]; then#g' shest/unit/myFirstStage/exampleTest
 
 # Do the work.
 result="$SHEST_SCRIPT"
