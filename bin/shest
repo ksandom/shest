@@ -666,6 +666,36 @@ function expect_not_resultLines # numberOfLines [message] [resultOverride]
   fi
 }
 
+function expect_errorLines # numberOfLines [message] [resultOverride]
+{
+  local fileName="$TEST_ERROR_FILE"
+  local numberOfLines="$1"
+  local message="${2:-}"
+  local resultOverride="${3:-fail}"
+  local actualNumberOflines="$(cat "$fileName" | wc -l)"
+  
+  if [ "$actualNumberOflines" -eq "$numberOfLines" ] ; then
+    setResult "pass" "$message" "expect_errorLines"
+  else
+    setResult "$resultOverride" "expect_errorLines \$result should have exactly $numberOfLines lines, but actually has $actualNumberOflines lines. $message" "expect_errorLines"
+  fi
+}
+
+function expect_not_errorLines # numberOfLines [message] [resultOverride]
+{
+  local fileName="$TEST_ERROR_FILE"
+  local numberOfLines="$1"
+  local message="${2:-}"
+  local resultOverride="${3:-fail}"
+  local actualNumberOflines="$(cat "$fileName" | wc -l)"
+  
+  if [ ! "$actualNumberOflines" -eq "$numberOfLines" ] ; then
+    setResult "pass" "$message" "expect_not_errorLines"
+  else
+    setResult "$resultOverride" "expect_not_errorLines \$result should have exactly $numberOfLines lines, but actually has $actualNumberOflines lines. $message" "expect_not_errorLines"
+  fi
+}
+
 function expect_condition # conditionPart1 conditionPart2 conditionPart3 [message] [resultOverride] . Eg "$actualValue" -gt 2.    resolves to [ "$actualValue" "-gt" "2" ]
 {
   local conditionPart1="$1"

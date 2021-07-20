@@ -1,0 +1,8 @@
+#!/bin/bash
+# expect_errorLines
+
+. "$SHEST_SCRIPT" "--doNothing"
+
+echo "Woooooo!" ## Test this.
+
+expect_not_errorLines 1
