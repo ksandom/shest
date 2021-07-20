@@ -12,6 +12,25 @@ Shest is aimed at automating
     * Integration testing.
     * Regression testing.
 
+## Some examples
+
+```bash
+echo "An awesome command." ## Test this.
+expect_exitCode 0
+expect_resultContains "awesome"
+expect_resultLines 1
+expect_errorLines 0
+```
+
+```bash
+date asd ## Test this.
+expect_exitCode 1
+expect_errorContains "invalid date"
+expect_errorLines 1
+```
+
+The `## Test this.` comment tells shest that this command needs its output and exit code captured so that it can be tested. You can do this multiple times within a single file.
+
 ## Some projects using shest
 
 * [shest](https://github.com/ksandom/shest) (itself).
